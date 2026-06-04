@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>创作会员 · 定价原型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f4ef; --ink:#1b1b1f; --mut:#6a675f; --faint:#a6a299;
+    --line:rgba(20,18,14,.10); --line2:rgba(20,18,14,.17);
+    --gold:#a9781e; --g1:#f1d28c; --g2:#c89535; --indigo:#4d5bd1; --bronze:#bf7d33;
+    --good:#2f9e69; --hot:#cf7a1e;
+    --disp:"Bricolage Grotesque",-apple-system,sans-serif;
+    --body:"Noto Sans SC",-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-font-smoothing:antialiased}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--body);
+    min-height:100vh; padding:38px 20px 70px; position:relative; overflow-x:hidden;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(760px 440px at 84% -8%, rgba(232,196,120,.32), transparent 62%),
+      radial-gradient(680px 460px at 12% 4%, rgba(120,140,255,.14), transparent 64%),
+      radial-gradient(900px 720px at 50% 118%, rgba(255,233,195,.36), transparent 62%);
+  }
+  body::after{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .wrap{max-width:1280px; margin:0 auto; position:relative; z-index:1}
+
+  .tabs{display:flex; gap:34px; justify-content:center; align-items:center; margin-bottom:30px}
+  .tab{font-family:var(--disp); font-weight:600; font-size:19px; color:var(--faint); letter-spacing:.5px; cursor:pointer; padding-bottom:9px; border-bottom:2px solid transparent; transition:.25s}
+  .tab.on{color:var(--ink); border-color:var(--gold)}
+  .tab:hover{color:var(--mut)}
+
+  .ctrl{display:flex; align-items:center; justify-content:center; gap:18px; margin-bottom:40px; flex-wrap:wrap; position:relative}
+  .seg{display:inline-flex; background:rgba(20,18,14,.05); border:1px solid var(--line); border-radius:999px; padding:5px}
+  .seg button{font-family:var(--body); font-weight:600; font-size:14px; color:var(--mut); background:none; border:none; padding:10px 22px; border-radius:999px; cursor:pointer; transition:.22s; white-space:nowrap}
+  .seg button.on{background:#fff; color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.06), 0 6px 14px rgba(40,35,25,.10)}
+  .seg button .pct{color:var(--gold); font-family:var(--disp); font-weight:800; margin-left:6px; font-size:13px}
+  .teamtotal{margin-top:11px; padding:8px 12px; background:rgba(201,162,77,.10); border:1px solid rgba(201,162,77,.26); border-radius:10px; font-size:13px; color:var(--mut); font-family:var(--body)}
+  .teamtotal b{color:var(--gold); font-family:var(--disp); font-weight:800; font-size:18px; margin:0 1px}
+  .seatbar{display:flex; align-items:center; justify-content:center; gap:10px; margin:0 0 30px; font-size:14px; color:var(--mut); font-weight:600}
+  .seatbar .step{width:34px; height:34px; border-radius:9px; border:1px solid var(--line); background:#fff; font-size:19px; font-family:var(--disp); cursor:pointer; color:var(--ink); line-height:1; transition:.15s}
+  .seatbar .step:hover{border-color:var(--gold); color:var(--gold)}
+  .seatbar input{width:62px; text-align:center; border:1px solid var(--line); border-radius:9px; padding:8px; font-family:var(--disp); font-weight:800; font-size:16px; color:var(--ink); outline:none}
+  .seatbar .min{font-size:12px; color:var(--mut); font-weight:400}
+  .supermart{position:absolute; right:0; top:50%; transform:translateY(-50%); border:1px solid rgba(169,120,30,.45); color:var(--gold); border-radius:999px; padding:11px 18px; font-size:13.5px; display:flex; gap:6px; align-items:center; cursor:pointer; background:rgba(233,201,128,.10)}
+  @media(max-width:1080px){.supermart{position:static; transform:none}}
+
+  .carousel{position:relative}
+  .fxnote{text-align:center; margin:-22px auto 34px; font-size:12.5px; color:var(--mut); display:flex; gap:14px; justify-content:center; align-items:center; flex-wrap:wrap}
+  .fxnote .pill{background:#fff; border:1px solid var(--line); border-radius:999px; padding:7px 15px; box-shadow:0 4px 12px rgba(40,35,25,.06)}
+  .fxnote b{color:var(--gold); font-family:var(--disp); font-weight:800}
+
+  .cards{display:flex; gap:18px; overflow-x:auto; scroll-behavior:smooth; scroll-snap-type:x proximity; padding:6px 4px 12px; -ms-overflow-style:none; scrollbar-width:none}
+  .cards::-webkit-scrollbar{display:none}
+  .arrow{position:absolute; top:168px; transform:none; z-index:18; width:48px; height:48px; border-radius:50%; border:1px solid var(--line2); background:#fff; color:var(--ink); font-size:26px; font-family:var(--disp); cursor:pointer; box-shadow:0 8px 22px rgba(40,35,25,.16); display:flex; align-items:center; justify-content:center; line-height:1; transition:transform .2s, box-shadow .2s, opacity .2s}
+  .arrow:hover{transform:scale(1.08); box-shadow:0 10px 28px rgba(40,35,25,.24)}
+  .arrow.left{left:-12px}
+  .arrow.right{right:-12px}
+  .arrow.dim{opacity:.32; pointer-events:none}
+  @media(max-width:560px){.arrow{display:none}}
+
+  .card{
+    position:relative; border:1px solid var(--line); border-radius:22px; padding:24px 20px 22px;
+    background:#fff; display:flex; flex-direction:column;
+    flex:0 0 308px; scroll-snap-align:start;
+    box-shadow:0 1px 3px rgba(40,35,25,.04), 0 12px 30px rgba(40,35,25,.06);
+    transition:transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s, border-color .3s;
+    opacity:0; transform:translateY(16px);
+  }
+  .card.show{opacity:1; transform:none}
+  @media(max-width:560px){.card{flex-basis:82%}}
+  .card:hover{transform:translateY(-6px); box-shadow:0 20px 46px rgba(40,35,25,.14)}
+  .card.flagship{background:linear-gradient(180deg,#f3f4ff,#fefeff); border-color:rgba(77,91,209,.24)}
+  .card.ultimate{background:linear-gradient(180deg,#fdf3e2,#fffdf9); border-color:rgba(191,125,51,.32)}
+
+  .chead{display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; min-height:30px}
+  .cname{font-family:var(--disp); font-weight:800; font-size:21px; letter-spacing:.4px; display:flex; align-items:center; gap:7px}
+  .badge{font-size:11.5px; font-weight:700; color:#3a2806; background:linear-gradient(180deg,var(--g1),var(--g2)); border-radius:7px; padding:4px 8px; white-space:nowrap; box-shadow:0 4px 10px rgba(184,133,47,.28)}
+
+  .price{display:flex; align-items:baseline; gap:6px; font-family:var(--disp); margin-top:2px}
+  .cur{font-size:22px; font-weight:600; transform:translateY(-10px)}
+  .amt{font-size:46px; font-weight:800; line-height:.9; letter-spacing:-1px}
+  .per{font-size:15px; color:var(--mut); font-weight:500}
+  .orig{font-size:15px; color:var(--faint); text-decoration:line-through; margin-left:4px; font-family:var(--disp); font-weight:600}
+  .freeword{font-family:var(--disp); font-weight:800; font-size:40px}
+
+  .renew{font-size:12px; color:var(--faint); margin-top:10px}
+  .raterow{display:flex; align-items:center; justify-content:space-between; margin-top:7px; font-size:12.5px}
+  .rate{color:var(--mut)}
+  .rate b{color:var(--ink); font-family:var(--disp); font-weight:800}
+  .yearcard{color:var(--gold); cursor:pointer; white-space:nowrap}
+
+  .pts{margin-top:20px; padding-top:18px; border-top:1px dashed var(--line2)}
+  .pts .big{font-family:var(--disp); font-weight:800; font-size:30px; letter-spacing:-.5px}
+  .pts .lab{font-size:12.5px; color:var(--mut); margin-left:5px; font-weight:500}
+  .gen{font-size:11.5px; color:var(--faint); margin-top:9px; line-height:1.6}
+  .gen b{color:var(--mut); font-family:var(--disp); font-weight:600}
+
+  /* tooltip */
+  .info{position:relative; cursor:help; margin-left:3px; color:var(--faint)}
+  .info .tip{
+    position:absolute; bottom:160%; right:-6px; width:236px; text-align:left;
+    background:#1b1b1f; color:#f4f1ea; font-family:var(--body); font-weight:400;
+    font-size:11px; line-height:1.65; padding:11px 13px; border-radius:11px;
+    box-shadow:0 12px 30px rgba(0,0,0,.32); opacity:0; pointer-events:none;
+    transform:translateY(5px); transition:.2s; z-index:30;
+  }
+  .info .tip b{color:var(--g1); font-family:var(--disp); font-weight:700}
+  .info .tip::after{content:""; position:absolute; top:100%; right:12px; border:6px solid transparent; border-top-color:#1b1b1f}
+  .info:hover .tip{opacity:1; transform:translateY(0)}
+
+  .cta{margin-top:18px; border:none; border-radius:12px; padding:14px; font-family:var(--body); font-weight:700; font-size:14.5px; cursor:pointer; background:#1b1b1f; color:#fff; transition:.2s}
+  .cta:hover{transform:translateY(-1px); filter:brightness(1.12)}
+  .card.ultimate .cta{background:linear-gradient(180deg,#eccb86,#c89535); color:#3a2806}
+  .card.flagship .cta{background:linear-gradient(180deg,#5b69de,#4150c4); color:#fff}
+
+  .acts{margin-top:20px; padding-top:18px; border-top:1px solid var(--line)}
+  .acts .h{font-size:13px; color:var(--indigo); font-weight:800; margin-bottom:10px; display:flex; align-items:center; gap:6px; letter-spacing:.3px; font-family:var(--disp)}
+  .ltag{font-size:10px; font-weight:700; color:#fff; background:#16a06a; border-radius:5px; padding:1px 5px; margin-left:5px; font-family:var(--body); vertical-align:middle}
+  .grant{margin-top:9px; font-size:12.5px; color:var(--indigo); font-weight:700; background:rgba(91,79,200,.08); border:1px solid rgba(91,79,200,.22); border-radius:9px; padding:7px 11px; font-family:var(--body)}
+  .grant b{font-family:var(--disp); font-weight:800; font-size:14px}
+  .actcap{font-size:10.5px; color:var(--faint); margin:-2px 0 13px; line-height:1.5}
+  .card.ultimate .acts .h{color:var(--gold)}
+  .mrow{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px}
+  .mrow:last-child{margin-bottom:2px}
+  .mrow .nm{flex:1; min-width:0; display:flex; flex-direction:column; gap:3px}
+  .mname{font-size:12px; color:var(--ink); font-weight:500; line-height:1.3}
+  .msub{font-size:10.5px; color:var(--faint); font-family:var(--disp); font-weight:400; letter-spacing:.2px}
+  .zhe{font-family:var(--disp); font-weight:800; font-size:11.5px; color:var(--hot); white-space:nowrap; border:1px solid rgba(207,122,30,.3); border-radius:7px; padding:3px 8px; background:rgba(207,122,30,.08); margin-top:1px}
+  .zhe.flat{color:var(--faint); border-color:var(--line); background:none}
+
+  .flist{margin-top:20px; padding-top:18px; border-top:1px solid var(--line)}
+  .flist .h{font-family:var(--disp); font-weight:800; font-size:13px; color:var(--ink); margin-bottom:12px; letter-spacing:.3px}
+  .fitem{display:flex; align-items:flex-start; gap:9px; font-size:11.5px; color:var(--mut); margin-bottom:10px; line-height:1.5}
+  .fitem .ck{color:var(--good); font-weight:800; flex:0 0 auto; margin-top:0; font-family:var(--disp)}
+
+  .calc{margin-top:46px; border:1px solid var(--line); border-radius:22px; background:#fff; padding:30px 28px; position:relative; box-shadow:0 12px 34px rgba(40,35,25,.07)}
+  .calc h3{font-family:var(--disp); font-weight:800; font-size:22px; margin-bottom:4px}
+  .calc .sub{color:var(--mut); font-size:13px; margin-bottom:22px}
+  .calcgrid{display:grid; grid-template-columns:1.3fr 1.3fr .9fr 1.5fr; gap:18px; align-items:end}
+  @media(max-width:860px){.calcgrid{grid-template-columns:1fr 1fr}}
+  .fld label{display:block; font-size:12px; color:var(--faint); margin-bottom:8px; font-weight:500}
+  .fld select, .fld input{width:100%; background:#fff; border:1px solid var(--line2); color:var(--ink); border-radius:11px; padding:13px 14px; font-family:var(--body); font-size:14px; outline:none}
+  .fld select:focus, .fld input:focus{border-color:var(--gold)}
+  .out{background:linear-gradient(180deg,#fdf3e1,#fffdf8); border:1px solid rgba(191,125,51,.3); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; justify-content:center; gap:4px}
+  .out .l{font-size:11.5px; color:var(--mut)}
+  .out .v{font-family:var(--disp); font-weight:800; font-size:26px; letter-spacing:-.5px; color:var(--gold)}
+  .out .v small{font-size:13px; color:var(--mut); font-weight:500; margin-left:4px}
+  .calcfoot{display:flex; flex-wrap:wrap; gap:26px; margin-top:22px; padding-top:18px; border-top:1px solid var(--line)}
+  .stat{display:flex; flex-direction:column; gap:3px}
+  .stat .l{font-size:11.5px; color:var(--faint)}
+  .stat .v{font-family:var(--disp); font-weight:700; font-size:18px}
+  .stat .v.strike{color:var(--faint); text-decoration:line-through; font-weight:600}
+  .stat .v.save{color:var(--good)}
+  .calcnote{margin-top:16px; font-size:12px; color:var(--mut); line-height:1.7; background:rgba(207,122,30,.07); border:1px solid rgba(207,122,30,.2); border-radius:10px; padding:11px 14px}
+  .calcnote b{color:var(--hot); font-weight:700}
+
+  .compare{margin-top:48px}
+  .compare h3{font-family:var(--disp); font-weight:800; font-size:22px; margin-bottom:6px}
+  .compare .sub{color:var(--mut); font-size:13px; margin-bottom:18px}
+  .tablewrap{overflow-x:auto; border:1px solid var(--line); border-radius:18px; background:#fff; box-shadow:0 12px 34px rgba(40,35,25,.07)}
+  .cmp{border-collapse:collapse; width:100%; min-width:880px; font-size:13px}
+  .cmp th,.cmp td{padding:13px 16px; text-align:center; border-bottom:1px solid var(--line); white-space:nowrap}
+  .cmp thead th{position:sticky; top:0; background:#faf8f4; font-family:var(--disp); font-weight:800; font-size:14px; color:var(--ink); z-index:3; border-bottom:1px solid var(--line2)}
+  .cmp .feat{position:sticky; left:0; background:#fff; text-align:left; font-weight:600; color:var(--ink); z-index:2; min-width:154px}
+  .cmp thead th.feat{z-index:4; background:#faf8f4}
+  .cmp tr.grp td{background:#f3f1ec}
+  .cmp tr.grp .feat{font-family:var(--disp); font-weight:800; color:var(--gold); font-size:12px; letter-spacing:.6px}
+  .cmp tr.hot td:not(.feat){background:rgba(233,201,128,.12)}
+  .cmp td{color:var(--mut)}
+  .cmp td.no{color:#c0564a}
+  .cmp td.yes{color:var(--good); font-family:var(--disp); font-weight:800; font-size:15px}
+  .cmp td.strong{color:var(--ink); font-weight:700}
+  .cmp tbody tr:not(.grp):hover td{background:rgba(20,18,14,.03)}
+  .cmp tbody tr:not(.grp):hover .feat{background:#fbfaf8}
+
+  .legend{margin-top:34px; color:var(--faint); font-size:11.5px; line-height:1.85; max-width:1000px}
+  .legend b{color:var(--mut)}
+  .legend .tag{display:inline-block; font-family:var(--disp); font-weight:700; color:var(--gold); margin-right:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="tabs" id="tabs">
+    <div class="tab on" data-view="personal">创作会员</div>
+    <div class="tab" data-view="team">团队版会员</div>
+  </div>
+
+  <div class="ctrl">
+    <div class="seg" id="cycleSeg">
+      <button data-cycle="monthly" class="on">连续包月</button>
+      <button data-cycle="annual">连续包年 <span class="pct">9折</span></button>
+    </div>
+    <div class="supermart">🎁 买一送一 · 会员超市 ›</div>
+  </div>
+
+  <div class="fxnote">
+    <span class="pill">🏷️ 积分单价 = 月费 ÷ 月积分（会员实付/积分，面值¥1）</span>
+    <span class="pill">⚠️ 实际价格以当前汇率为准</span>
+  </div>
+
+  <div class="seatbar" id="seatbar" style="display:none">
+    团队席位
+    <button class="step" id="seatMinus" aria-label="减少席位">−</button>
+    <input id="seatInput" type="number" min="2" value="5">
+    <button class="step" id="seatPlus" aria-label="增加席位">+</button>
+    <span class="min">最低 2 席 · 积分按团队共享池发放</span>
+  </div>
+
+  <div class="carousel">
+    <button class="arrow left dim" id="arrowL" aria-label="上一组">‹</button>
+    <div class="cards" id="cards"></div>
+    <button class="arrow right" id="arrowR" aria-label="下一组">›</button>
+  </div>
+</div>
+
+<script>
+/* ============ CONFIG（按需修改） ============ */
+const MEMBER_OFF = 0.95;          // 会员价 95 折
+const FX = 1;                     // 1 积分 = ¥1（原 10:1，即 ¥0.1/积分）
+const ORIG_OFF = 0.8;             // 统一划线价折扣：现价 = 原价 × ORIG_OFF（即原价 = 现价 ÷ 0.8，限时8折）。改这一个数即可统一调折扣。
+const ceil2 = x => Math.ceil(x*100 - 1e-9)/100;   // 进位（向上取整）两位小数
+const ceil3 = x => Math.ceil(x*1000 - 1e-9)/1000;  // 进位（向上取整）三位小数
+const floor2 = x => Math.floor(x*100 + 1e-9)/100;  // 直接舍去（向下截断）两位小数
+const fmt2 = n => n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt3 = n => n.toLocaleString('zh-CN',{minimumFractionDigits:3,maximumFractionDigits:3});
+const fmt0 = n => Math.floor(n).toLocaleString('zh-CN');
+const zheTxt = m => m>=1 ? '原价' : (+(m*10).toFixed(1))+'折';   // 0.92→9.2折，保留一位小数
+const memUnit = (m,d) => floor2(m.cost*d);           // 会员单价/原子单位（秒或张）= 成本×折扣，保留两位小数直接舍去
+const memCons = (m,d) => memUnit(m,d) * (m.mult||1); // 会员单价/消耗单位（视频个=10秒 / 图片张）
+
+// 各档：原价 + 月度赠送积分（完整量级，不除以10，含适当上调）
+const tiers = [
+  {id:'free',     name:'免费版', emoji:'🆓', priceOrig:0,    price:0,    points:10,    cls:'',         free:true},
+  {id:'basic',    name:'基础版', emoji:'📦', priceOrig:69,   price:69,   points:70,    cls:''},
+  {id:'standard', name:'标准版', emoji:'⭐', priceOrig:199,  price:199,  points:205,   cls:''},
+  {id:'pro',      name:'高级版', emoji:'💡', priceOrig:499,  price:499,  points:520,   cls:''},
+  {id:'flagship', name:'旗舰版', emoji:'🚀', priceOrig:1099, price:1099, points:1160,  cls:'flagship'},
+  {id:'ultimate', name:'尊享版', emoji:'💎', priceOrig:2999, price:2999, points:3200,  cls:'ultimate'},
+];
+
+// 模型基准消耗（积分/次 = 真实¥成本，1:1）+ 各档积分折扣（不同模型不同）
+const models = [
+  {id:'sd2',    name:'Seedance 2.0',      spec:'720P 视频', cost:0.994, mult:10, unit:'个', rateUnit:'秒', src:'Seedance 2.0 720P 无参考',
+    disc:{free:1, basic:.96, standard:.95, pro:.94, flagship:.93, ultimate:.92}},
+  {id:'sd2f',   name:'Seedance 2.0 Fast', spec:'720P 视频', cost:0.8,   mult:10, unit:'个', rateUnit:'秒', src:'Seedance 2.0 Fast 720P',
+    disc:{free:1, basic:.95, standard:.94, pro:.93, flagship:.92, ultimate:.90}},
+  {id:'sumeng', name:'塑梦模型',           spec:'720P 视频', cost:0.994, mult:10, unit:'个', rateUnit:'秒', src:'塑梦 · Seedance 2.0 720P', limited:true,
+    disc:{free:1, basic:.50, standard:.48, pro:.46, flagship:.44, ultimate:.42}},
+  {id:'img',    name:'gpt-image-2',      spec:'2K', cost:0.5, mult:1, unit:'张', rateUnit:'张', src:'gpt-image-2',
+    disc:{free:1, basic:.98, standard:.96, pro:.94, flagship:.92, ultimate:.90}},
+];
+// “最多生成”图片估算口径：用卡片展示的图片模型 gpt-image-2
+const IMG_DEFAULT = models.find(m=>m.id==='img');
+const VID_DEFAULT = models.find(m=>m.id==='sd2f');
+
+// 功能与权益（6列对应 免费/基础/标准/高级/旗舰/尊享）
+const benefitGroups = [
+  {title:'用量与上限', hot:true, rows:[
+    {label:'并发任务上限',   vals:['1','3','8','12','20','30'], annualVals:['1','5','12','18','30','50'], strong:[4,5]},
+    {label:'项目创建上限',   vals:['3','20','50','200','500','1,000']},
+    {label:'真人项目上限',   vals:['不支持','3','10','50','150','300']},
+    {label:'非真人项目上限', vals:['3','20','50','200','500','1,000']},
+    {label:'最高导出清晰度', vals:['720p 水印','720p','720p','1080p','1080p 高码率','4K 高码率'], strong:[5]},
+    {label:'云空间',         vals:['1 GB','10 GB','30 GB','100 GB','500 GB','1 TB+'], annualVals:['2 GB','30 GB','100 GB','300 GB','1.5 TB','3 TB+'], strong:[5]},
+  ]},
+  {title:'服务与权益', rows:[
+    {label:'商用授权',       vals:['不支持商用','商用无忧','商用无忧','商用无忧','商用无忧','商用无忧']},
+    {label:'支持服务',       vals:['自助','标准支持','标准支持','工单支持','优先支持','1v1 专属支持'], strong:[5]},
+    {label:'单项目分集上限', vals:['无限','无限','无限','无限','无限','无限']},
+    {label:'队列优先级',     vals:['普通速度','会员专享加速','会员专享加速','会员专享加速','会员专享加速','会员专享加速']},
+    {label:'限时活动',       vals:['登录即送 10 积分','Seedance 2.0 超值折扣','Seedance 2.0 超值折扣','Seedance 2.0 超值折扣','Seedance 2.0 超值折扣','Seedance 2.0 超值折扣']},
+  ]},
+];
+const workflow = ['AI 剧本策划','智能分镜生成','角色与场景资产库','Agent 全流程创作','智能对白与旁白生成','无限创作画布','一键成片生成','云端资产库'];
+
+// 卡片内权益清单（按挡位取值，数据复用 benefitGroups）
+const allBenefitRows = benefitGroups.flatMap(g=>g.rows);
+const bVal = (label, ti, useAnnual) => { const r=allBenefitRows.find(x=>x.label===label); if(!r) return ''; return (useAnnual && r.annualVals) ? r.annualVals[ti] : r.vals[ti]; };
+const cardBenefitSpec = [
+  {label:'并发任务上限',   tpl:v=> v==='无限' ? '无限并发任务' : `${v} 个并发任务`},
+  {label:'云空间',         tpl:v=>`云端存储空间 ${v}`},
+  {label:'最高导出清晰度', tpl:v=>`最高导出 ${v}`},
+  {label:'商用授权',       tpl:v=>v},
+  {label:'队列优先级',     tpl:v=>v},
+  {label:'支持服务',       tpl:v=>v},
+];
+/* ============================================ */
+
+let cycle = 'monthly';   // 'monthly' | 'annual'
+let view  = 'personal';  // 'personal' | 'team'
+let seats = 5;           // 团队席位（最低 2）
+
+function cardHTML(t, i){
+  const ti     = tiers.indexOf(t);   // 原始档位下标（权益按此取，避免年付/团队隐藏免费档后串位）
+  const annual = cycle==='annual';
+  const team   = view==='team';
+  const n       = team ? seats : 1;
+  const per     = t.free ? 0 : (annual ? Math.round(t.priceOrig*12*0.9) : t.price);  // 每席现价：包年=月费×12×9折
+  const perOrig = t.free ? 0 : (annual ? t.priceOrig*12 : t.price);                  // 每席原价：包年划线=月费×12；月付=现价(不划线)
+  const savePct = perOrig>0 ? Math.round((1 - per/perOrig)*100) : 0;                 // 包年立省%（≈10%）
+  const total    = per * n;                      // 团队本单合计（个人 n=1）
+  const totalOrig = perOrig * n;                  // 团队本单原价（划线价合计）
+  const moPts   = (annual && t.aMo) ? t.aMo : t.points;  // 当期每月积分（年包高档可加成）
+  const poolPts = moPts * n;                     // 每月积分（团队=每席积分×席位）
+  const dispPts = annual ? poolPts*12 : poolPts; // 卡片主数字：年付突出「年享积分」
+  const rate    = t.free ? 0 : per / (annual ? moPts*12 : t.points);  // 积分单价：年付=年费÷年享积分
+  const U       = annual ? '年' : '月';
+  const imgD = IMG_DEFAULT.disc[t.id], vidD = VID_DEFAULT.disc[t.id];
+  const imgAfter = memCons(IMG_DEFAULT, imgD);   // qwen-image 会员价/张
+  const vidAfter = memCons(VID_DEFAULT, vidD);   // sd2f 会员价/个（10秒）
+  const imgN = Math.floor(poolPts / imgAfter);   // 按当月发放积分（年付=每月口径）
+  const vidN = Math.floor(poolPts / vidAfter);
+
+  const priceBlock = t.free
+    ? `<div class="price"><span class="freeword">免费</span></div>${team?`<div class="teamtotal">${fmt0(n)} 席 · 团队共享</div>`:``}`
+    : (team
+       ? `<div class="price">
+            <span class="cur">¥</span><span class="amt">${fmt0(total)}</span><span class="per">/${U}</span>
+            ${total < totalOrig ? `<span class="orig">¥${fmt0(totalOrig)}</span>` : ``}
+          </div>
+          <div class="teamtotal">¥${fmt0(per)}/席 × ${fmt0(n)} 席</div>`
+       : `<div class="price">
+            <span class="cur">¥</span><span class="amt">${fmt0(per)}</span><span class="per">/${U}</span>
+            ${per < perOrig ? `<span class="orig">¥${fmt0(perOrig)}</span>` : ``}
+          </div>`);
+
+
+  let rateRight, rateClick = '';
+  if(team)        rateRight = `团队共享积分池`;
+  else if(annual) rateRight = `折合 ¥${fmt0(Math.round(t.priceOrig*0.9))}/月`;
+  else { rateRight = `买年卡更省 ›`; rateClick = ` onclick="document.querySelector('#cycleSeg [data-cycle=annual]').click()"`; }
+  const rateRow = t.free ? `<div class="raterow"><span class="rate">体验档 · 不计费</span></div>`
+    : `<div class="raterow">
+         <span class="rate">积分单价 <b>¥${fmt2(rate)}</b>/积分</span>
+         <span class="yearcard"${rateClick}>${rateRight}</span>
+       </div>`;
+
+  const ptsLab = annual
+    ? (team ? `积分/年 · 团队共享（${fmt0(n)}席）` : `积分/年`)
+    : (team ? `积分/月 · 团队共享（${fmt0(n)}席）` : `积分/月`);
+
+  const tip = `参考模型：<br>
+    🎬 <b>Seedance 2.0 Fast 720P</b>（视频 10秒/个）<br>
+    🖼️ <b>gpt-image-2</b>（图像 1 张）`;
+
+  const modelRows = models.filter(m=>!m.onlyTiers).map(m=>{
+    const d = m.disc[t.id];
+    const eff = memUnit(m, d);          // 会员价/原子单位（成本×折扣 进位）
+    return `<div class="mrow">
+      <span class="nm">
+        <span class="mname">✦ ${m.name}${m.limited?' <span class="ltag">高性价比</span>':''}</span>
+        <span class="msub">${fmt2(eff)}积分/${m.rateUnit} · ${m.spec}</span>
+      </span>
+      <span class="zhe">${zheTxt(d)}</span>
+    </div>`;
+  }).join('');
+
+  const genLine = t.free
+    ? `<div class="gen">仅可用于 <b>剧本生成</b> · 不含图片 / 视频</div>`
+    : `<div class="gen">${annual?'每月最多生成约':'最多生成约'} <b>${fmt0(imgN)}</b> 张图片 ｜ <b>${fmt0(vidN)}</b> 个视频<span class="info">ⓘ<span class="tip">${tip}</span></span></div>`;
+  const grantLine = (annual && !t.free)
+    ? `<div class="grant">📅 按月发放 · 每月 <b>${fmt0(poolPts)}</b> 积分 × 12 期</div>`
+    : '';
+
+  const actsBlock = t.free
+    ? `<div class="acts"><div class="h">🎁 限时活动</div>
+         <div class="mrow"><span class="nm">✦ 登录即送 10 积分</span></div>
+       </div>`
+    : `<div class="acts"><div class="h">🎁 限时活动</div>${modelRows}</div>`;
+
+  const benefitItems = cardBenefitSpec
+    .map(s=>{
+      const r = allBenefitRows.find(x=>x.label===s.label);
+      const v = bVal(s.label, ti, annual);
+      if(/^不支持/.test(v)) return '';   // 不支持的权益不显示该行
+      const boosted = annual && r && r.annualVals && r.annualVals[ti] !== r.vals[ti];
+      return `<div class="fitem"><span class="ck">✓</span><span>${s.tpl(v)}${boosted?' <span class="ltag">年付加量</span>':''}</span></div>`;
+    }).join('');
+  const exItems = workflow
+    .map(f=>`<div class="fitem"><span class="ck">✓</span><span>${f}</span></div>`).join('');
+
+  return `<div class="card ${t.cls}" style="transition-delay:${i*55}ms">
+    <div class="chead">
+      <div class="cname">${t.emoji} ${t.name}</div>
+    </div>
+    ${priceBlock}
+    ${rateRow}
+    <div class="pts">
+      <div><span class="big">${fmt0(dispPts)}</span><span class="lab">${ptsLab}</span></div>
+      ${grantLine}
+      ${genLine}
+    </div>
+    <button class="cta">${t.free?'免费体验':'立即开通'}</button>
+    ${actsBlock}
+    <div class="flist">${benefitItems}</div>
+    <div class="flist"><div class="h">独家功能</div>${exItems}</div>
+  </div>`;
+}
+
+document.getElementById('cycleSeg').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  cycle = b.dataset.cycle;
+  document.querySelectorAll('#cycleSeg button').forEach(x=>x.classList.toggle('on', x===b));
+  renderCards();
+});
+
+const seatbar = document.getElementById('seatbar');
+const seatInput = document.getElementById('seatInput');
+document.getElementById('tabs').addEventListener('click', e=>{
+  const tb = e.target.closest('.tab'); if(!tb) return;
+  view = tb.dataset.view;
+  document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.toggle('on', x===tb));
+  seatbar.style.display = (view==='team') ? 'flex' : 'none';
+  renderCards();
+});
+function setSeats(v){ seats = Math.max(2, parseInt(v,10) || 2); seatInput.value = seats; renderCards(); }
+document.getElementById('seatMinus').addEventListener('click', ()=>setSeats(seats-1));
+document.getElementById('seatPlus').addEventListener('click', ()=>setSeats(seats+1));
+seatInput.addEventListener('change', ()=>setSeats(seatInput.value));
+
+function renderCards(){
+  const noFree = (cycle==='annual') || (view==='team');   // 包年 / 团队 无免费档
+  const list = tiers.filter(t => !(t.free && noFree));
+  document.getElementById('cards').innerHTML = list.map(cardHTML).join('');
+  requestAnimationFrame(()=>document.querySelectorAll('.card').forEach(c=>c.classList.add('show')));
+}
+
+/* carousel arrows */
+const cardsEl=document.getElementById('cards'), aL=document.getElementById('arrowL'), aR=document.getElementById('arrowR');
+const stepPx=()=>{const c=cardsEl.querySelector('.card'); return (c?c.getBoundingClientRect().width+18:300)*2;};
+function updArrows(){
+  const e=2;
+  aL.classList.toggle('dim', cardsEl.scrollLeft<=e);
+  aR.classList.toggle('dim', cardsEl.scrollLeft+cardsEl.clientWidth>=cardsEl.scrollWidth-e);
+}
+aL.addEventListener('click',()=>cardsEl.scrollBy({left:-stepPx(),behavior:'smooth'}));
+aR.addEventListener('click',()=>cardsEl.scrollBy({left:stepPx(),behavior:'smooth'}));
+cardsEl.addEventListener('scroll',updArrows);
+window.addEventListener('resize',updArrows);
+
+renderCards();
+setTimeout(updArrows, 60);
+</script>
+</body>
+</html>
