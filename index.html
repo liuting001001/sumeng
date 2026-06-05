@@ -101,8 +101,11 @@
   .yearcard{color:var(--gold); cursor:pointer; white-space:nowrap}
 
   .pts{margin-top:20px; padding-top:18px; border-top:1px dashed var(--line2)}
+  .ptsmain{display:flex; justify-content:space-between; align-items:flex-end; gap:8px}
   .pts .big{font-family:var(--disp); font-weight:800; font-size:30px; letter-spacing:-.5px}
   .pts .lab{font-size:12.5px; color:var(--mut); margin-left:5px; font-weight:500}
+  .unitprice{font-size:11.5px; color:var(--mut); font-weight:600; white-space:nowrap; padding-bottom:3px}
+  .unitprice b{color:var(--ink); font-family:var(--disp); font-weight:800}
   .gen{font-size:11.5px; color:var(--faint); margin-top:9px; line-height:1.6}
   .gen b{color:var(--mut); font-family:var(--disp); font-weight:600}
 
@@ -133,9 +136,14 @@
   .card.ultimate .acts .h{color:var(--gold)}
   .mrow{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px}
   .mrow:last-child{margin-bottom:2px}
-  .mrow .nm{flex:1; min-width:0; display:flex; flex-direction:column; gap:3px}
+  .mgroup{margin-bottom:13px}
+  .mgroup:last-child{margin-bottom:2px}
+  .mline{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:4px}
+  .mline .msub{flex:1; min-width:0}
   .mname{font-size:12px; color:var(--ink); font-weight:500; line-height:1.3}
-  .msub{font-size:10.5px; color:var(--faint); font-family:var(--disp); font-weight:400; letter-spacing:.2px}
+  .msub{font-size:11px; color:var(--faint); font-family:var(--disp); font-weight:400; letter-spacing:.2px}
+  .msub .op{text-decoration:line-through; color:var(--mut); margin-right:5px; opacity:.9}
+  .msub .dp{color:var(--hot); font-weight:800}
   .zhe{font-family:var(--disp); font-weight:800; font-size:11.5px; color:var(--hot); white-space:nowrap; border:1px solid rgba(207,122,30,.3); border-radius:7px; padding:3px 8px; background:rgba(207,122,30,.08); margin-top:1px}
   .zhe.flat{color:var(--faint); border-color:var(--line); background:none}
 
@@ -252,7 +260,8 @@ const tiers = [
 
 // 模型基准消耗（积分/次 = 真实¥成本，1:1）+ 各档积分折扣（不同模型不同）
 const models = [
-  {id:'sd2',    name:'Seedance 2.0',      spec:'720P 视频', cost:0.994, mult:10, unit:'个', rateUnit:'秒', src:'Seedance 2.0 720P 无参考',
+  {id:'sd2',    name:'Seedance 2.0', cost:0.994, mult:10, unit:'个', rateUnit:'秒', src:'Seedance 2.0 无参考',
+    variants:[{spec:'720P 视频', cost:0.994}, {spec:'1080P 视频', cost:2.478, onlyTiers:['pro','flagship','ultimate']}],
     disc:{free:1, basic:.96, standard:.95, pro:.94, flagship:.93, ultimate:.92}},
   {id:'sd2f',   name:'Seedance 2.0 Fast', spec:'720P 视频', cost:0.8,   mult:10, unit:'个', rateUnit:'秒', src:'Seedance 2.0 Fast 720P',
     disc:{free:1, basic:.95, standard:.94, pro:.93, flagship:.92, ultimate:.90}},
@@ -272,7 +281,7 @@ const benefitGroups = [
     {label:'项目创建上限',   vals:['3','20','50','200','500','1,000']},
     {label:'真人项目上限',   vals:['不支持','3','10','50','150','300']},
     {label:'非真人项目上限', vals:['3','20','50','200','500','1,000']},
-    {label:'最高导出清晰度', vals:['720p 水印','720p','720p','1080p','1080p 高码率','4K 高码率'], strong:[5]},
+    {label:'最高导出清晰度', vals:['720p 水印','720p','720p','1080p','1080p','4K 高码率'], strong:[5]},
     {label:'云空间',         vals:['1 GB','10 GB','30 GB','100 GB','500 GB','1 TB+'], annualVals:['2 GB','30 GB','100 GB','300 GB','1.5 TB','3 TB+'], strong:[5]},
   ]},
   {title:'服务与权益', rows:[
@@ -343,7 +352,6 @@ function cardHTML(t, i){
   else { rateRight = `买年卡更省 ›`; rateClick = ` onclick="document.querySelector('#cycleSeg [data-cycle=annual]').click()"`; }
   const rateRow = t.free ? `<div class="raterow"><span class="rate">体验档 · 不计费</span></div>`
     : `<div class="raterow">
-         <span class="rate">积分单价 <b>¥${fmt2(rate)}</b>/积分</span>
          <span class="yearcard"${rateClick}>${rateRight}</span>
        </div>`;
 
@@ -355,15 +363,21 @@ function cardHTML(t, i){
     🎬 <b>Seedance 2.0 Fast 720P</b>（视频 10秒/个）<br>
     🖼️ <b>gpt-image-2</b>（图像 1 张）`;
 
-  const modelRows = models.filter(m=>!m.onlyTiers).map(m=>{
+  const modelRows = models.filter(m=>!m.onlyTiers || m.onlyTiers.includes(t.id)).map(m=>{
     const d = m.disc[t.id];
-    const eff = memUnit(m, d);          // 会员价/原子单位（成本×折扣 进位）
-    return `<div class="mrow">
-      <span class="nm">
-        <span class="mname">✦ ${m.name}${m.limited?' <span class="ltag">高性价比</span>':''}</span>
-        <span class="msub">${fmt2(eff)}积分/${m.rateUnit} · ${m.spec}</span>
-      </span>
-      <span class="zhe">${zheTxt(d)}</span>
+    const variants = m.variants
+      ? m.variants.filter(v=>!v.onlyTiers || v.onlyTiers.includes(t.id))
+      : [{spec:m.spec, cost:m.cost}];
+    const lines = variants.map(v=>{
+      const eff = floor2(v.cost * d);     // 该规格会员价 = 成本×折扣（直接舍去）
+      return `<div class="mline">
+        <span class="msub"><span class="op">${fmt2(v.cost)}</span><b class="dp">${fmt2(eff)}</b> 积分/${m.rateUnit} · ${v.spec}</span>
+        <span class="zhe">${zheTxt(d)}</span>
+      </div>`;
+    }).join('');
+    return `<div class="mgroup">
+      <div class="mname">✦ ${m.name}${m.limited?' <span class="ltag">高性价比</span>':''}</div>
+      ${lines}
     </div>`;
   }).join('');
 
@@ -383,8 +397,12 @@ function cardHTML(t, i){
   const benefitItems = cardBenefitSpec
     .map(s=>{
       const r = allBenefitRows.find(x=>x.label===s.label);
-      const v = bVal(s.label, ti, annual);
+      let v = bVal(s.label, ti, annual);
       if(/^不支持/.test(v)) return '';   // 不支持的权益不显示该行
+      // 团队：并发任务、云空间按席位累计显示总量
+      if(team && (s.label==='并发任务上限' || s.label==='云空间')){
+        v = v.replace(/^[\d.]+/, m=>{const x=parseFloat(m)*n; return x%1===0?String(x):String(+x.toFixed(1));});
+      }
       const boosted = annual && r && r.annualVals && r.annualVals[ti] !== r.vals[ti];
       return `<div class="fitem"><span class="ck">✓</span><span>${s.tpl(v)}${boosted?' <span class="ltag">年付加量</span>':''}</span></div>`;
     }).join('');
@@ -398,7 +416,10 @@ function cardHTML(t, i){
     ${priceBlock}
     ${rateRow}
     <div class="pts">
-      <div><span class="big">${fmt0(dispPts)}</span><span class="lab">${ptsLab}</span></div>
+      <div class="ptsmain">
+        <div><span class="big">${fmt0(dispPts)}</span><span class="lab">${ptsLab}</span></div>
+        ${t.free?'':`<span class="unitprice">积分单价 <b>¥${fmt2(rate)}</b>/积分</span>`}
+      </div>
       ${grantLine}
       ${genLine}
     </div>
