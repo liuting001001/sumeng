@@ -45,7 +45,7 @@
   .seg button{font-family:var(--body); font-weight:600; font-size:14px; color:var(--mut); background:none; border:none; padding:10px 22px; border-radius:999px; cursor:pointer; transition:.22s; white-space:nowrap}
   .seg button.on{background:#fff; color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,.06), 0 6px 14px rgba(40,35,25,.10)}
   .seg button .pct{color:var(--gold); font-family:var(--disp); font-weight:800; margin-left:6px; font-size:13px}
-  .teamtotal{margin-top:11px; padding:8px 12px; background:rgba(201,162,77,.10); border:1px solid rgba(201,162,77,.26); border-radius:10px; font-size:13px; color:var(--mut); font-family:var(--body)}
+  .teamtotal{margin-top:11px; padding:8px 12px; background:rgba(201,162,77,.10); border:1px solid rgba(201,162,77,.26); border-radius:10px; font-size:13px; color:var(--mut); font-family:var(--body); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .teamtotal b{color:var(--gold); font-family:var(--disp); font-weight:800; font-size:18px; margin:0 1px}
   .seatbar{display:flex; align-items:center; justify-content:center; gap:10px; margin:0 0 30px; font-size:14px; color:var(--mut); font-weight:600}
   .seatbar .step{width:34px; height:34px; border-radius:9px; border:1px solid var(--line); background:#fff; font-size:19px; font-family:var(--disp); cursor:pointer; color:var(--ink); line-height:1; transition:.15s}
@@ -87,7 +87,9 @@
   .cname{font-family:var(--disp); font-weight:800; font-size:21px; letter-spacing:.4px; display:flex; align-items:center; gap:7px}
   .badge{font-size:11.5px; font-weight:700; color:#3a2806; background:linear-gradient(180deg,var(--g1),var(--g2)); border-radius:7px; padding:4px 8px; white-space:nowrap; box-shadow:0 4px 10px rgba(184,133,47,.28)}
 
-  .price{display:flex; align-items:baseline; gap:6px; font-family:var(--disp); margin-top:2px}
+  .price{display:flex; align-items:baseline; gap:6px; font-family:var(--disp); margin-top:2px; white-space:nowrap}
+  .origline{font-size:13px; color:var(--faint); font-family:var(--disp); font-weight:600; margin-top:4px}
+  .origline s{text-decoration:line-through}
   .cur{font-size:22px; font-weight:600; transform:translateY(-10px)}
   .amt{font-size:46px; font-weight:800; line-height:.9; letter-spacing:-1px}
   .per{font-size:15px; color:var(--mut); font-weight:500}
@@ -99,6 +101,10 @@
   .rate{color:var(--mut)}
   .rate b{color:var(--ink); font-family:var(--disp); font-weight:800}
   .yearcard{color:var(--gold); cursor:pointer; white-space:nowrap}
+  .monthsel{display:flex; gap:7px; margin-top:11px; flex-wrap:wrap}
+  .monthsel .mopt{font-family:var(--disp); font-weight:700; font-size:12.5px; color:var(--mut); background:#fff; border:1px solid var(--line); border-radius:9px; padding:5px 13px; cursor:pointer; transition:all .15s}
+  .monthsel .mopt:hover{border-color:var(--ink)}
+  .monthsel .mopt.on{color:#fff; background:var(--ink); border-color:var(--ink)}
 
   .pts{margin-top:20px; padding-top:18px; border-top:1px dashed var(--line2)}
   .ptsmain{display:flex; justify-content:space-between; align-items:flex-end; gap:8px}
@@ -207,8 +213,8 @@
 
   <div class="ctrl">
     <div class="seg" id="cycleSeg">
-      <button data-cycle="monthly" class="on">连续包月</button>
-      <button data-cycle="annual">连续包年 <span class="pct">9折</span></button>
+      <button data-cycle="monthly" id="cycMonthly" class="on">连续包月</button>
+      <button data-cycle="annual">按年购买（12个月）<span class="pct">9折</span></button>
     </div>
     <div class="supermart">🎁 买一送一 · 会员超市 ›</div>
   </div>
@@ -310,54 +316,66 @@ const cardBenefitSpec = [
 let cycle = 'monthly';   // 'monthly' | 'annual'
 let view  = 'personal';  // 'personal' | 'team'
 let seats = 5;           // 团队席位（最低 2）
+let buyMonths = {basic:1, standard:1, pro:1, flagship:1, ultimate:1};   // 各档一次性购买期数（1/3/6 月）
+function setBuyMonths(id, k){ const c=document.getElementById('cards'); const sl=c.scrollLeft; buyMonths[id]=k; renderCards(); c.scrollLeft=sl; setTimeout(updArrows,60); }
 
 function cardHTML(t, i){
   const ti     = tiers.indexOf(t);   // 原始档位下标（权益按此取，避免年付/团队隐藏免费档后串位）
   const annual = cycle==='annual';
   const team   = view==='team';
   const n       = team ? seats : 1;
-  const per     = t.free ? 0 : (annual ? Math.round(t.priceOrig*12*0.9) : t.price);  // 每席现价：包年=月费×12×9折
-  const perOrig = t.free ? 0 : (annual ? t.priceOrig*12 : t.price);                  // 每席原价：包年划线=月费×12；月付=现价(不划线)
-  const savePct = perOrig>0 ? Math.round((1 - per/perOrig)*100) : 0;                 // 包年立省%（≈10%）
-  const total    = per * n;                      // 团队本单合计（个人 n=1）
-  const totalOrig = perOrig * n;                  // 团队本单原价（划线价合计）
-  const moPts   = (annual && t.aMo) ? t.aMo : t.points;  // 当期每月积分（年包高档可加成）
-  const poolPts = moPts * n;                     // 每月积分（团队=每席积分×席位）
-  const dispPts = annual ? poolPts*12 : poolPts; // 卡片主数字：年付突出「年享积分」
-  const rate    = t.free ? 0 : per / (annual ? moPts*12 : t.points);  // 积分单价：年付=年费÷年享积分
-  const U       = annual ? '年' : '月';
+  const subTiers = ['basic','standard','pro'];   // 走订阅自动扣费的档（仅个人；单笔均≤1000）
+  const multi   = !annual && !t.free && (team || !subTiers.includes(t.id));  // 团队全档 / 个人高级及以上 → 多月一次性
+  const mN      = annual ? 12 : (multi ? (buyMonths[t.id]||1) : 1);                 // 购买期数（月）
+  const MULTI_OFF = {1:1, 3:0.97, 6:0.94};                                          // 多月一次性阶梯折扣（始终浅于年付9折）
+  const termDisc = annual ? 0.9 : (multi ? MULTI_OFF[mN] : 1);                       // 按年9折；多月阶梯折扣；连续包月不打折
+  const per     = t.free ? 0 : Math.round(t.priceOrig * mN * termDisc);             // 每席该期总价
+  const perOrig = t.free ? 0 : (mN>1 ? t.priceOrig*mN : t.price);                   // 原价划线 = 月费×期数（多月/按年都划线）
+  const total    = per * n;                       // 团队本单合计（个人 n=1）
+  const totalOrig = perOrig * n;
+  const moPts   = t.points;                        // 每月每席积分
+  const poolPts = moPts * n;                       // 每月积分（团队=每席×席位）
+  const dispPts = poolPts * mN;                    // 卡片主数字：该期总积分
+  const rate    = t.free ? 0 : per / (moPts * mN); // 积分单价（每席每积分实付）
+  const U       = mN===1 ? '月' : (annual ? '年' : `${mN}个月`);
   const imgD = IMG_DEFAULT.disc[t.id], vidD = VID_DEFAULT.disc[t.id];
   const imgAfter = memCons(IMG_DEFAULT, imgD);   // qwen-image 会员价/张
   const vidAfter = memCons(VID_DEFAULT, vidD);   // sd2f 会员价/个（10秒）
   const imgN = Math.floor(poolPts / imgAfter);   // 按当月发放积分（年付=每月口径）
   const vidN = Math.floor(poolPts / vidAfter);
 
+  const bigAmt = team ? total : per;
+  const bigOrig = team ? totalOrig : perOrig;
+  const amtStr = fmt0(bigAmt);
+  const amtFs = amtStr.length<=5 ? 46 : amtStr.length===6 ? 38 : amtStr.length===7 ? 30 : amtStr.length<=9 ? 24 : 20;  // 大金额自适应字号，防溢出
   const priceBlock = t.free
     ? `<div class="price"><span class="freeword">免费</span></div>${team?`<div class="teamtotal">${fmt0(n)} 席 · 团队共享</div>`:``}`
-    : (team
-       ? `<div class="price">
-            <span class="cur">¥</span><span class="amt">${fmt0(total)}</span><span class="per">/${U}</span>
-            ${total < totalOrig ? `<span class="orig">¥${fmt0(totalOrig)}</span>` : ``}
-          </div>
-          <div class="teamtotal">¥${fmt0(per)}/席 × ${fmt0(n)} 席</div>`
-       : `<div class="price">
-            <span class="cur">¥</span><span class="amt">${fmt0(per)}</span><span class="per">/${U}</span>
-            ${per < perOrig ? `<span class="orig">¥${fmt0(perOrig)}</span>` : ``}
-          </div>`);
+    : `<div class="price">
+         <span class="cur">¥</span><span class="amt" style="font-size:${amtFs}px">${amtStr}</span><span class="per">/${U}</span>
+       </div>
+       ${bigAmt < bigOrig ? `<div class="origline">原价 <s>¥${fmt0(bigOrig)}</s></div>` : ``}
+       ${team ? `<div class="teamtotal">${fmt0(n)} 席 · 每席 ¥${fmt0(per)}</div>` : ``}`;
 
+
+  const monthSel = multi
+    ? `<div class="monthsel">${[1,3,6].map(k=>`<button class="mopt${k===mN?' on':''}" onclick="setBuyMonths('${t.id}',${k})">${k}个月</button>`).join('')}</div>`
+    : '';
 
   let rateRight, rateClick = '';
   if(team)        rateRight = `团队共享积分池`;
   else if(annual) rateRight = `折合 ¥${fmt0(Math.round(t.priceOrig*0.9))}/月`;
-  else { rateRight = `买年卡更省 ›`; rateClick = ` onclick="document.querySelector('#cycleSeg [data-cycle=annual]').click()"`; }
+  else if(multi)  rateRight = `一次性购买 · 不自动续费`;
+  else { rateRight = `按年购买更省 ›`; rateClick = ` onclick="document.querySelector('#cycleSeg [data-cycle=annual]').click()"`; }
   const rateRow = t.free ? `<div class="raterow"><span class="rate">体验档 · 不计费</span></div>`
     : `<div class="raterow">
          <span class="yearcard"${rateClick}>${rateRight}</span>
        </div>`;
 
-  const ptsLab = annual
-    ? (team ? `积分/年 · 团队共享（${fmt0(n)}席）` : `积分/年`)
-    : (team ? `积分/月 · 团队共享（${fmt0(n)}席）` : `积分/月`);
+  const ptsLab = mN===1
+    ? (team ? `积分/月 · 团队共享（${fmt0(n)}席）` : `积分/月`)
+    : annual
+      ? (team ? `积分/年 · 团队共享（${fmt0(n)}席）` : `积分/年`)
+      : (team ? `积分 · 共${mN}个月 · 团队共享（${fmt0(n)}席）` : `积分 · 共${mN}个月`);
 
   const tip = `参考模型：<br>
     🎬 <b>Seedance 2.0 Fast 720P</b>（视频 10秒/个）<br>
@@ -383,9 +401,9 @@ function cardHTML(t, i){
 
   const genLine = t.free
     ? `<div class="gen">仅可用于 <b>剧本生成</b> · 不含图片 / 视频</div>`
-    : `<div class="gen">${annual?'每月最多生成约':'最多生成约'} <b>${fmt0(imgN)}</b> 张图片 ｜ <b>${fmt0(vidN)}</b> 个视频<span class="info">ⓘ<span class="tip">${tip}</span></span></div>`;
-  const grantLine = (annual && !t.free)
-    ? `<div class="grant">📅 按月发放 · 每月 <b>${fmt0(poolPts)}</b> 积分 × 12 期</div>`
+    : `<div class="gen">${mN>1?'每月最多生成约':'最多生成约'} <b>${fmt0(imgN)}</b> 张图片 ｜ <b>${fmt0(vidN)}</b> 个视频<span class="info">ⓘ<span class="tip">${tip}</span></span></div>`;
+  const grantLine = (mN>1 && !t.free)
+    ? `<div class="grant">📅 按月发放 · 每月 <b>${fmt0(poolPts)}</b> 积分 × ${mN} 期</div>`
     : '';
 
   const actsBlock = t.free
@@ -414,6 +432,7 @@ function cardHTML(t, i){
       <div class="cname">${t.emoji} ${t.name}</div>
     </div>
     ${priceBlock}
+    ${monthSel}
     ${rateRow}
     <div class="pts">
       <div class="ptsmain">
@@ -423,7 +442,7 @@ function cardHTML(t, i){
       ${grantLine}
       ${genLine}
     </div>
-    <button class="cta">${t.free?'免费体验':'立即开通'}</button>
+    <button class="cta">${t.free?'免费体验':((annual||multi)?'立即购买':'立即开通')}</button>
     ${actsBlock}
     <div class="flist">${benefitItems}</div>
     <div class="flist"><div class="h">独家功能</div>${exItems}</div>
@@ -444,6 +463,7 @@ document.getElementById('tabs').addEventListener('click', e=>{
   view = tb.dataset.view;
   document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.toggle('on', x===tb));
   seatbar.style.display = (view==='team') ? 'flex' : 'none';
+  document.getElementById('cycMonthly').textContent = (view==='team') ? '按月购买' : '连续包月';
   renderCards();
 });
 function setSeats(v){ seats = Math.max(2, parseInt(v,10) || 2); seatInput.value = seats; renderCards(); }
